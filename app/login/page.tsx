@@ -3,41 +3,60 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClientSupabaseClient } from "@/lib/supabase-client"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { getGoogleOAuthURL } from "@/lib/google-oauth"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClientSupabaseClient()
 
-  const handleGoogleLogin = async () => {
+  // Check for error parameters in the URL
+  useEffect(() => {
+    const errorParam = searchParams.get("error")
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        no_code: "No authorization code received from Google.",
+        token_exchange: "Failed to exchange authorization code for tokens.",
+        no_user: "No user found. Please sign up first.",
+        store_token: "Failed to store the refresh token.",
+        callback: "An error occurred during the OAuth callback.",
+      }
+
+      setError(errorMessages[errorParam] || "An error occurred during authentication.")
+    }
+  }, [searchParams])
+
+  // First, handle Supabase authentication
+  const handleSupabaseLogin = async () => {
     try {
       setIsLoading(true)
-
-      // Get the current origin for the redirect URL
-      const origin = typeof window !== "undefined" ? window.location.origin : ""
+      setError(null)
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: origin, // Redirect to root path instead of /auth/callback
-          scopes: "email profile https://www.googleapis.com/auth/gmail.readonly",
+          redirectTo: `${window.location.origin}/connect-gmail`,
         },
       })
 
       if (error) {
-        console.error("OAuth error:", error)
         throw error
       }
-
-      // User will be redirected to Google's OAuth page
-    } catch (error) {
-      console.error("Error logging in with Google:", error)
-      alert("Error logging in with Google. Please try again.")
+    } catch (error: any) {
+      console.error("Error logging in with Supabase:", error)
+      setError(error.message || "Failed to login with Google.")
       setIsLoading(false)
     }
+  }
+
+  // Direct Google OAuth for Gmail access
+  const handleGmailConnect = () => {
+    window.location.href = getGoogleOAuthURL()
   }
 
   return (
@@ -48,9 +67,13 @@ export default function LoginPage() {
           <CardDescription className="text-center">Sign in to your Referral Buddy account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm mb-4">{error}</div>
+          )}
+
           <Button
             variant="outline"
-            onClick={handleGoogleLogin}
+            onClick={handleSupabaseLogin}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-2"
           >
