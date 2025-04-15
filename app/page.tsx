@@ -1,8 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { redirect } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 
 export default async function LandingPage({
   searchParams,
@@ -12,23 +10,9 @@ export default async function LandingPage({
   // Check if there's a code parameter in the URL
   const code = searchParams.code
 
-  // If there's a code, handle the OAuth callback
+  // If there's a code, redirect to the OAuth callback route
   if (typeof code === "string") {
-    try {
-      const supabase = createServerComponentClient({ cookies })
-
-      // Exchange code for session
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-      if (error) {
-        console.error("Error exchanging code for session:", error)
-      } else {
-        // Redirect to Notion after successful authentication
-        redirect("https://www.notion.so/referralbuddy/Referral-Buddy-1049e1785265805aa6d8d1a417766778")
-      }
-    } catch (error) {
-      console.error("Error handling OAuth callback:", error)
-    }
+    redirect(`/api/oauth/callback?code=${code}`)
   }
 
   // Regular landing page content if no code is present

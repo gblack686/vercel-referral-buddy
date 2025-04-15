@@ -1,17 +1,7 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+// This file should only be used in server components or API routes
 
 // Function to get a fresh access token using the stored refresh token
-export async function getFreshAccessToken(userId: string) {
-  const supabase = createServerComponentClient({ cookies })
-
-  // Get the refresh token from the database
-  const { data: userData, error } = await supabase.from("users").select("refresh_token").eq("id", userId).single()
-
-  if (error || !userData?.refresh_token) {
-    throw new Error("Refresh token not found")
-  }
-
+export async function getFreshAccessToken(refreshToken: string) {
   // Exchange refresh token for a new access token
   try {
     const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -22,7 +12,7 @@ export async function getFreshAccessToken(userId: string) {
       body: new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: userData.refresh_token,
+        refresh_token: refreshToken,
         grant_type: "refresh_token",
       }).toString(),
     })
@@ -40,11 +30,8 @@ export async function getFreshAccessToken(userId: string) {
 }
 
 // Function to send an email using the Gmail API
-export async function sendEmail(userId: string, to: string, subject: string, body: string) {
+export async function sendEmail(accessToken: string, to: string, subject: string, body: string) {
   try {
-    // Get a fresh access token
-    const accessToken = await getFreshAccessToken(userId)
-
     // Create the email content
     const email = [`To: ${to}`, `Subject: ${subject}`, "Content-Type: text/html; charset=utf-8", "", body].join("\r\n")
 

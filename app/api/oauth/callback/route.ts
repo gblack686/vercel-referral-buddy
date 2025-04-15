@@ -1,4 +1,4 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
@@ -19,15 +19,15 @@ export async function GET(request: Request) {
     }
 
     // Get the current user from Supabase
-    const supabase = createServerComponentClient({ cookies })
+    const cookieStore = cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
       // If no user is logged in, we need to handle this case
-      // This could happen if the user is not authenticated with Supabase yet
-      // You might want to create a new user or redirect to login
       return NextResponse.redirect(new URL("/login?error=no_user", request.url))
     }
 
