@@ -1,7 +1,37 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { redirect } from "next/navigation"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  // Check if there's a code parameter in the URL
+  const code = searchParams.code
+
+  // If there's a code, handle the OAuth callback
+  if (typeof code === "string") {
+    try {
+      const supabase = createServerComponentClient({ cookies })
+
+      // Exchange code for session
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+      if (error) {
+        console.error("Error exchanging code for session:", error)
+      } else {
+        // Redirect to Notion after successful authentication
+        redirect("https://www.notion.so/referralbuddy/Referral-Buddy-1049e1785265805aa6d8d1a417766778")
+      }
+    } catch (error) {
+      console.error("Error handling OAuth callback:", error)
+    }
+  }
+
+  // Regular landing page content if no code is present
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 text-center">

@@ -22,7 +22,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo: origin, // Redirect to root path instead of /auth/callback
           scopes: "email profile https://www.googleapis.com/auth/gmail.readonly",
         },
       })

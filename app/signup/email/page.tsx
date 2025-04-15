@@ -32,7 +32,7 @@ export default function EmailSignUp() {
         email,
         password,
         options: {
-          emailRedirectTo: `${origin}/auth/callback`,
+          emailRedirectTo: origin, // Redirect to root path instead of /auth/callback
         },
       })
 
