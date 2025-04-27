@@ -18,10 +18,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL("/login?error=auth", request.url))
       }
 
-      // After successful authentication, redirect to Notion
-      return NextResponse.redirect(
-        "https://www.notion.so/referralbuddy/Referral-Buddy-1049e1785265805aa6d8d1a417766778",
-      )
+      // After successful authentication, redirect to the dashboard
+      // where the client can fetch the session and store the token if needed.
+      const redirectUrl = new URL("/dashboard", request.url)
+      return NextResponse.redirect(redirectUrl)
     }
 
     // If no code is present, redirect to login
